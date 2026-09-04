@@ -24,9 +24,9 @@ Both roles share the same `Users` table and are distinguished by a `Role` column
 ```
 RaceDay/
 ├── docs/
-│   ├── erd.png                      # Entity Relationship Diagram (Section A)
-│   ├── API_Endpoint_Plan.md         # API endpoint plan (Section B)
-│   ├── RaceDay_Database_Script.sql  # Full SQL schema + seed data (Section C)
+│   ├── erd.png                      # Entity Relationship Diagram 
+│   ├── API_Endpoint_Plan.md         # API endpoint plan 
+│   ├── RaceDay_Database_Script.sql  # Full SQL schema + seed data 
 │   └── ci-success-screenshot.png    # Screenshot of a passing GitHub Actions run
 ├── .github/
 │   └── workflows/
@@ -46,25 +46,25 @@ The full schema is defined in [`docs/RaceDay_Database_Script.sql`](docs/RaceDay_
 
 ## API Endpoint Plan
 
-The full list of planned endpoints is documented in [`docs/API_Endpoint_Plan.md`](docs/API_Endpoint_Plan.md), covering Authentication, User Profile, Events, Categories, Event Enrolments, Results, and Payments (22 endpoints in total). The Part 2 implementation will follow this plan; any deviations will be explained here.
+The full list of planned endpoints is documented in ['docs/API_Endpoint_Plan.md'](docs/API_Endpoint_Plan.md), covering Authentication, User Profile, Events, Categories, Event Enrolments, Results, and Payments (22 endpoints in total). The Part 2 implementation will follow this plan; any deviations will be explained here.
 
 ## CI/CD
 
-A GitHub Actions workflow ([`.github/workflows/validate-structure.yml`](.github/workflows/validate-structure.yml)) runs on every push and validates that the `/docs` folder exists and contains the required planning files.
+A GitHub Actions workflow ['.github/workflows/main.yml'](.github/workflows/main.yml) runs on every push and validates that the `/docs` folder exists and contains the required planning files.
 
 **Latest successful run:**
 
-![CI passing](docs/ci-success-screenshot.png)
+![CI passing]()
 
-*(Screenshot to be added once the workflow has been run against this repository.)*
+*(Screenshot to be added once the workflow has been run against this repository*
+<img width="1912" height="1018" alt="ci-success-screenshot png" src="https://github.com/user-attachments/assets/f69a7f29-7664-476b-b4e5-63a68df646ac" />
+
+
 
 ## Video Walkthrough
 
 An unlisted YouTube video walking through the planning documents, ERD decisions, endpoint plan choices, and a live run of the SQL script in SSMS:
 
-**[Insert YouTube link here]**
+**[]**
 
-## Author
 
-Tsatsawane - Diploma in Software Development, Second Year
-Module: PROG6212 - Programming 2B
