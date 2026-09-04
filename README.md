@@ -65,6 +65,6 @@ A GitHub Actions workflow ['.github/workflows/main.yml'](.github/workflows/main.
 
 An unlisted YouTube video walking through the planning documents, ERD decisions, endpoint plan choices, and a live run of the SQL script in SSMS:
 
-**[]**
+**['https://youtu.be/iFqD6JO7HOM'](https://youtu.be/iFqD6JO7HOM)**
 
 
