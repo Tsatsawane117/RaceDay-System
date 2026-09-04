@@ -1,0 +1,63 @@
+name: Validate Repository Structure
+
+# Runs on every push and pull request so the check stays green as you keep committing
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  validate-docs:
+    name: Check /docs folder and required files
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check /docs folder exists
+        run: |
+          if [ ! -d "docs" ]; then
+            echo "::error::Missing /docs folder in the repository root."
+            exit 1
+          fi
+          echo "/docs folder found."
+
+      - name: Check ERD file exists (PNG or PDF)
+        run: |
+          if ls docs/*.png 1> /dev/null 2>&1 || ls docs/*.pdf 1> /dev/null 2>&1; then
+            echo "ERD file found in /docs."
+          else
+            echo "::error::No ERD file (.png or .pdf) found in /docs."
+            exit 1
+          fi
+
+      - name: Check API Endpoint Plan exists (PDF or Markdown)
+        run: |
+          if ls docs/*Endpoint*.md 1> /dev/null 2>&1 || ls docs/*Endpoint*.pdf 1> /dev/null 2>&1; then
+            echo "API Endpoint Plan found in /docs."
+          else
+            echo "::error::No API Endpoint Plan (.md or .pdf) found in /docs."
+            exit 1
+          fi
+
+      - name: Check SQL script exists
+        run: |
+          if ls docs/*.sql 1> /dev/null 2>&1; then
+            echo "SQL script found in /docs."
+          else
+            echo "::error::No .sql file found in /docs."
+            exit 1
+          fi
+
+      - name: Check README exists
+        run: |
+          if [ ! -f "README.md" ]; then
+            echo "::error::README.md is missing from the repository root."
+            exit 1
+          fi
+          echo "README.md found."
+
+      - name: Summary
+        run: echo "All required Part 1 files are present. Structure check passed."
