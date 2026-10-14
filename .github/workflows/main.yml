@@ -25,7 +25,7 @@ jobs:
         run: dotnet restore RaceDay-Repo/RaceDay.sln
 
       - name: Build
-        run: dotnet build Part2-API/RaceDay.sln --configuration Release --no-restore RaceDay-Repo/RaceDay.sln
+        run: dotnet build Part2-API/RaceDay.sln --configuration Release --no-restore 
 
       - name: Run unit tests
-        run: dotnet test Part2-API/RaceDay.sln --configuration Release --no-build --verbosity normal RaceDay-Repo/RaceDay.sln
+        run: dotnet test Part2-API/RaceDay.sln --configuration Release --no-build --verbosity normal 
