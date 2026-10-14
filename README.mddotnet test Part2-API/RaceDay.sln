@@ -7,7 +7,7 @@ enrol in a category, pay the entry fee and view their own results.
 | Part | Folder | What it contains |
 |---|---|---|
 | Part 1 - Planning and Database | `/docs` | ERD, API endpoint plan, SQL script |
-| Part 2 - RESTful API | `/Part2-API` | ASP.NET Core Web API, EF Core, session auth, Swagger, unit tests |
+| Part 2 - RESTful API | `/Part2-API` | ASP.NET Core Web API, EF Core, session authentication, Swagger, unit tests |
 
 ## The two roles
 
@@ -16,24 +16,24 @@ enrol in a category, pay the entry fee and view their own results.
 | **Organiser** | Create, update and delete their own events; define categories for them; view all enrolments for their events; capture finish times and positions. |
 | **Participant** | Browse events and categories; enrol in a category; pay the entry fee; cancel their own enrolment; view their own results. |
 
-Both roles can register, log in and view/update their own profile. Role rules are enforced on the server:
+Both roles can register, log in and view or update their own profile. Role rules are enforced on the server:
 an Organiser cannot use Participant-only endpoints and vice versa, and an Organiser can only change
 events that they own.
 
 ## Technology
 
-ASP.NET Core Web API (.NET 8) - Entity Framework Core (Code-First) - SQL Server - ASP.NET Core sessions -
+ASP.NET Core Web API (.NET 10) - Entity Framework Core (Code-First) - SQL Server - ASP.NET Core sessions -
 Swagger (Swashbuckle) - xUnit - GitHub Actions
 
 ## Setup and run instructions (Part 2)
 
 ### Prerequisites
-- Visual Studio 2022 (or newer) with the **ASP.NET and web development** workload
-- .NET 8 SDK (or newer)
+- Visual Studio with the **ASP.NET and web development** workload
+- .NET 10 SDK (installed with the latest Visual Studio)
 - SQL Server (LocalDB, which comes with Visual Studio, or SQL Server Express) and SSMS
 
 ### 1. Open the solution
-Open `Part2-API/RaceDay.sln` in Visual Studio.
+Open `Part2-API/RaceDay.sln` in Visual Studio and wait for the NuGet packages to restore.
 
 ### 2. Check the connection string
 Open `Part2-API/RaceDay.Api/appsettings.json`. The default uses LocalDB:
@@ -42,28 +42,27 @@ Open `Part2-API/RaceDay.Api/appsettings.json`. The default uses LocalDB:
 Server=(localdb)\MSSQLLocalDB;Database=RaceDayDB;Trusted_Connection=True;TrustServerCertificate=True
 ```
 
-If you use SQL Server Express, change the server to `.\SQLEXPRESS` (use the same server name you type
-into SSMS when connecting).
+If you use SQL Server Express, change the server to `.\SQLEXPRESS` (use the same server name you type into
+SSMS when connecting).
 
 ### 3. Create the database (EF Core Code-First migration)
-In Visual Studio: **Tools > NuGet Package Manager > Package Manager Console**. Set
-**Default project** to `RaceDay.Api`, then run:
+The migration is already in the repository (`RaceDay.Api/Migrations`). In Visual Studio open
+**Tools > NuGet Package Manager > Package Manager Console**, set **Default project** to `RaceDay.Api`, then run:
 
 ```
-Add-Migration InitialCreate
 Update-Database
 ```
 
-Open SSMS and refresh: the `RaceDayDB` database now contains Users, Events, Categories, Enrolments,
-Results and Payments. When the API starts it also seeds the same sample data as the Part 1 SQL script.
+Open SSMS and refresh: the `RaceDayDB` database now contains the Users, Events, Categories, Enrolments,
+Results and Payments tables. When the API starts it seeds the same sample data as the Part 1 SQL script.
 
 ### 4. Run the API
-Set `RaceDay.Api` as the startup project and press **F5**. Swagger opens at
+Right-click `RaceDay.Api`, choose **Set as Startup Project**, and press **F5**. Swagger opens at
 `https://localhost:7105/swagger`.
 
 ### 5. Try it
-Log in through Swagger (`POST /api/auth/login`). The browser then keeps the session cookie, so every
-other endpoint works as that user.
+Log in through Swagger with `POST /api/auth/login`. The browser keeps the session cookie, so every other
+endpoint then works as that user.
 
 | Seeded account | Role | Password |
 |---|---|---|
@@ -73,13 +72,14 @@ other endpoint works as that user.
 | amahle.zulu@gmail.com | Participant | `Password123!` |
 
 ### 6. Run the unit tests
-In Visual Studio: **Test > Run All Tests**. Or from a terminal in the repository root:
+In Visual Studio: **Test > Run All Tests** (results appear in Test Explorer). Or from a terminal in the
+repository root:
 
 ```
 dotnet test Part2-API/RaceDay.sln
 ```
 
-The tests start the real API in memory with an in-memory database, so they need no SQL Server.
+There are 74 tests. They start the real API in memory with an in-memory database, so they need no SQL Server.
 
 ## Authentication and security
 
@@ -87,14 +87,14 @@ The tests start the real API in memory with an in-memory database, so they need 
 - **Password hashing:** passwords are hashed with PBKDF2 (SHA-256, 100,000 iterations, unique random salt per
   password). The original password is never stored or returned.
 - **Session management:** on login the server creates a server-side session that stores the user's id and role.
-  The browser only receives an HttpOnly session cookie. `[SessionAuthorize]` reads the session on every protected
-  request: no session = **401 Unauthorized**; wrong role = **403 Forbidden**.
+  The browser only receives an HttpOnly session cookie. The `[SessionAuthorize]` attribute reads the session on every
+  protected request: no session returns **401 Unauthorized**, and the wrong role returns **403 Forbidden**.
 - **Ownership checks:** Organisers can only change events, categories, enrolments and results that belong to their own
-  events; Participants can only see and pay for their own enrolments.
+  events. Participants can only see and pay for their own enrolments.
 
 ## API endpoints
 
-Every endpoint is documented live in Swagger (purpose, expected input, and each possible response).
+Every endpoint is documented live in Swagger, including its purpose, the data it expects and each response it can return.
 
 | Method | Route | Access |
 |---|---|---|
@@ -124,29 +124,29 @@ Every endpoint is documented live in Swagger (purpose, expected input, and each 
 
 ## Differences from the Part 1 plan
 
-The Part 2 API follows the Part 1 endpoint plan (22 endpoints). The following changes were made deliberately:
+The Part 2 API follows the Part 1 endpoint plan (22 endpoints). These changes were made deliberately:
 
 1. **Events table: two new columns.** The Part 2 brief requires each event to capture a *distance* and an
    *event type* (run, walk or cycle), which the Part 1 ERD did not include. `DistanceKM` and `EventType` were added to
    Events (see `Part2-API/Database/Part2_Schema_Update.sql`). All other tables and columns match the Part 1 ERD and SQL script.
-2. **One extra endpoint:** `POST /api/auth/logout`, needed so the session can be ended.
-3. **Seeded passwords:** the Part 1 SQL script used placeholder text for password hashes; the API seeds real PBKDF2
-   hashes of `Password123!` so the sample accounts can actually log in.
+2. **One extra endpoint:** `POST /api/auth/logout`, needed so a session can be ended.
+3. **Seeded passwords:** the Part 1 SQL script used placeholder text for password hashes. The API seeds real PBKDF2
+   hashes of `Password123!` so the sample accounts can log in.
 4. **Extra response codes:** deleting an event or category that already has enrolments returns `409 Conflict`, and
    `POST /api/results` returns `200` (instead of `201`) when it updates an existing result.
-5. **Cancelling an enrolment** sets its status to "Cancelled" rather than deleting the row, so results and payments
+5. **Cancelling an enrolment** sets its status to "Cancelled" instead of deleting the row, so results and payments
    stay traceable.
 
 ## CI/CD
 
-The workflow in `.github/workflows/part2-ci.yml` builds the solution and runs all unit tests on every push.
-(`.github/workflows/validate-structure.yml` from Part 1 continues to validate the `/docs` folder.)
+The workflow in `.github/workflows/part2-ci.yml` runs on every push. It installs .NET 10, restores packages, builds the
+solution in Release mode, and runs all unit tests. A failing build or test turns the run red.
 
 **Latest successful run:**
 
 ![CI passing](docs/part2-ci-success.png)
 
-*(Replace this with your screenshot of a green build.)*
+*(Replace `docs/part2-ci-success.png` with your screenshot of the green build.)*
 
 ## Video walkthrough
 
