@@ -1,0 +1,43 @@
+name: Part 2 - Build and Test API
+
+# Runs on every push and pull request: builds the solution, then runs all unit tests.
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  build-and-test:
+    name: Build and run unit tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Locate the test project
+        run: |
+          TEST_PROJECT=$(find . -iname 'RaceDay.Tests.csproj' -not -path '*/obj/*' | head -n 1)
+          if [ -z "$TEST_PROJECT" ]; then
+            echo "::error::RaceDay.Tests.csproj was not found in the repository. Check that the RaceDay.Tests folder was pushed to GitHub."
+            echo "Project and solution files that ARE in the repository:"
+            find . -iname '*.csproj' -o -iname '*.sln'
+            exit 1
+          fi
+          echo "Found test project: $TEST_PROJECT"
+          echo "TEST_PROJECT=$TEST_PROJECT" >> "$GITHUB_ENV"
+
+      - name: Restore packages
+        run: dotnet restore "$TEST_PROJECT"
+
+      - name: Build
+        run: dotnet build "$TEST_PROJECT" --configuration Release --no-restore
+
+      - name: Run unit tests
+        run: dotnet test "$TEST_PROJECT" --configuration Release --no-build --verbosity normal
