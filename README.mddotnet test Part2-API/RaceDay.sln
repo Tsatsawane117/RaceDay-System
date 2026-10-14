@@ -1,6 +1,5 @@
 # RaceDay
 
-RaceDay is an event registration and race-day management system built for PROG6212 (Programming 2B).
 **Organisers** create events and race categories and capture results. **Participants** browse events,
 enrol in a category, pay the entry fee and view their own results.
 
@@ -80,6 +79,7 @@ dotnet test Part2-API/RaceDay.sln
 ```
 
 There are 74 tests. They start the real API in memory with an in-memory database, so they need no SQL Server.
+("C:\Users\nekho\OneDrive\Pictures\Screenshots\Screenshot 2026-10-14 215450.png")
 
 ## Authentication and security
 
@@ -144,9 +144,9 @@ solution in Release mode, and runs all unit tests. A failing build or test turns
 
 **Latest successful run:**
 
-![CI passing](docs/part2-ci-success.png)
+![CI passing]("C:\Users\nekho\OneDrive\Pictures\Screenshots\Screenshot 2026-10-14 214501.png")
 
-*(Replace `docs/part2-ci-success.png` with your screenshot of the green build.)*
+
 
 ## Video walkthrough
 
@@ -154,6 +154,4 @@ Unlisted YouTube video demonstrating the running API, code structure, endpoints,
 
 **[Insert YouTube link here]**
 
-## Author
 
-Tsatsawane - Diploma in Software Development, Second Year - PROG6212 Programming 2B
