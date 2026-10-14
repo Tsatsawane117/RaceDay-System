@@ -79,7 +79,7 @@ dotnet test Part2-API/RaceDay.sln
 ```
 
 There are 74 tests. They start the real API in memory with an in-memory database, so they need no SQL Server.
-("C:\Users\nekho\OneDrive\Pictures\Screenshots\Screenshot 2026-10-14 215450.png")
+! ("C:\Users\nekho\OneDrive\Pictures\Screenshots\Screenshot 2026-10-14 215450.png")
 
 ## Authentication and security
 
