@@ -152,3 +152,4 @@ solution in Release mode, and runs all unit tests. A failing build or test turns
 ## Video walkthrough
 
 Unlisted YouTube video demonstrating the running API, code structure, endpoints, authentication and unit tests:
+https://youtu.be/lHZ6dlrIsxk
