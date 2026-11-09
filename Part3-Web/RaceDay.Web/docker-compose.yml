@@ -1,0 +1,63 @@
+# Starts the whole RaceDay system with one command:
+#     docker compose up --build
+#
+#   web  (MVC front end)  ->  http://localhost:5080
+#   api  (Web API)        ->  http://localhost:5081/swagger
+#   sqlserver (database)  ->  localhost,14330  (user sa, see password below)
+#
+# The SA password below is for this local demo container only. Never reuse it anywhere real.
+
+name: raceday
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "RaceDay_Str0ng!Pass"
+    ports:
+      - "14330:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  api:
+    build:
+      context: ./Part2-API/RaceDay.Api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__RaceDayDb: "Server=sqlserver,1433;Database=RaceDayDB;User Id=sa;Password=RaceDay_Str0ng!Pass;TrustServerCertificate=True;MultipleActiveResultSets=true"
+      # Put your Azure Storage connection string in a file named .env (see .env.example).
+      # If it is empty the API stores images in a local folder instead of Azure.
+      AzureBlob__ConnectionString: "${AZURE_STORAGE_CONNECTION_STRING:-}"
+      AzureBlob__ContainerName: "${AZURE_BLOB_CONTAINER:-raceday-images}"
+    ports:
+      - "5081:8080"
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./Part3-Web/RaceDay.Web
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      # Inside Docker the web app reaches the API by its service name...
+      ApiSettings__BaseUrl: "http://api:8080"
+      # ...but the browser loads locally stored images from the published API port.
+      ApiSettings__PublicBaseUrl: "http://localhost:5081"
+    ports:
+      - "5080:8080"
+    depends_on:
+      - api
+
+volumes:
+  sqldata:
+  uploads:
