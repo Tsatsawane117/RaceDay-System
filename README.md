@@ -170,6 +170,8 @@ dotnet test Part2-API/RaceDay.sln
 94 tests start the real API in memory (with an in-memory database and a fake image store), covering success and failure
 cases for registration, login, role enforcement, events, categories, enrolments, payments, results, image uploads, the
 Organiser dashboard data and the Participant race history.
+<img width="1917" height="1020" alt="Screenshot 2026-11-09 221047" src="https://github.com/user-attachments/assets/f22da68b-a412-4d9d-9bb2-15183b43c543" />
+
 
 
 ## CI/CD
