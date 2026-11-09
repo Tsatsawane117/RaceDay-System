@@ -1,155 +1,210 @@
 # RaceDay
 
-**Organisers** create events and race categories and capture results. **Participants** browse events,
-enrol in a category, pay the entry fee and view their own results.
+RaceDay is an event registration and race-day management platform for runners, walkers and cyclists.
+**Organisers** create events and race categories, upload event banners, see who has entered and publish results.
+**Participants** browse upcoming events, enter a category, pay their entry fee, follow their enrolment status and
+look back at their own race history.
+
+Built for PROG6212 (Programming 2B) as one Portfolio of Evidence in three parts:
 
 | Part | Folder | What it contains |
 |---|---|---|
 | Part 1 - Planning and Database | `/docs` | ERD, API endpoint plan, SQL script |
-| Part 2 - RESTful API | `/Part2-API` | ASP.NET Core Web API, EF Core, session authentication, Swagger, unit tests |
+| Part 2 - RESTful API | `/Part2-API` | ASP.NET Core Web API, EF Core (Code-First), session authentication, Swagger, unit tests |
+| Part 3 - Web application | `/Part3-Web` | ASP.NET Core MVC front end, Azure Blob Storage image uploads (through the API), Docker |
+
+## How the pieces fit together
+
+```
+  Browser
+     |
+     v
+  RaceDay.Web  (MVC, port 5080)        No database access. No business logic.
+     |  HTTP + JSON, session cookie forwarded
+     v
+  RaceDay.Api  (Web API, port 5081)    All data rules, authentication and file handling live here.
+     |                    |
+     v                    v
+  SQL Server        Azure Blob Storage  (event banners and profile pictures)
+```
+
+The MVC application never touches the database and never talks to Azure. Everything goes through the Part 2 API.
 
 ## The two roles
 
 | Role | What they can do |
 |---|---|
-| **Organiser** | Create, update and delete their own events; define categories for them; view all enrolments for their events; capture finish times and positions. |
-| **Participant** | Browse events and categories; enrol in a category; pay the entry fee; cancel their own enrolment; view their own results. |
+| **Organiser** | Dashboard of their events; create, edit and delete events (with banner upload); add and remove categories; see every enrolment for their events; capture and publish finish times and positions. |
+| **Participant** | Browse and filter upcoming events; see full event details; enter an event by choosing a category; pay the entry fee; see colour-coded enrolment statuses; view personal results; edit their profile and upload a profile picture. |
 
-Both roles can register, log in and view or update their own profile. Role rules are enforced on the server:
-an Organiser cannot use Participant-only endpoints and vice versa, and an Organiser can only change
-events that they own.
+Each role gets its own navigation menu and its own pages. Anyone who is not logged in is sent to the login page when
+they try to open a protected page, and a logged-in user who opens a page for the other role sees an "access denied" page.
 
-## Technology
+## Features by page
 
-ASP.NET Core Web API (.NET 10) - Entity Framework Core (Code-First) - SQL Server - ASP.NET Core sessions -
-Swagger (Swashbuckle) - xUnit - GitHub Actions
+**Everyone:** Events home page (search, type and distance filters, include past events), event details with categories,
+public results page for each event, register, log in.
 
-## Setup and run instructions (Part 2)
+**Organiser:** Dashboard (events created, total enrolments, upcoming dates, enrolments per event) - Manage events
+(create / edit / delete, banner upload) - Categories (add / remove age or distance categories) - Enrolments (every
+participant, category, bib number and status) - Results entry (finish time, position, result status) - Profile.
 
-### Prerequisites
-- Visual Studio with the **ASP.NET and web development** workload
-- .NET 10 SDK (installed with the latest Visual Studio)
-- SQL Server (LocalDB, which comes with Visual Studio, or SQL Server Express) and SSMS
+**Participant:** Home with filters - Event detail with "Enter" per category - My events (status badges, pay, cancel) -
+My results (event, date, category, finish time and position such as "47th out of 312 finishers") - Profile with picture upload.
 
-### 1. Open the solution
-Open `Part2-API/RaceDay.sln` in Visual Studio and wait for the NuGet packages to restore.
+Statuses are colour coded everywhere: **green** = Confirmed / Open / Finished, **amber** = Pending / DNF,
+**red** = Cancelled / DSQ, blue = Planned, grey = Closed / Not started.
 
-### 2. Check the connection string
-Open `Part2-API/RaceDay.Api/appsettings.json`. The default uses LocalDB:
+## Authentication and session management
+
+- Registration and login are done by calling the API. A user chooses Participant or Organiser when registering.
+- The API hashes passwords with PBKDF2 (SHA-256, 100,000 iterations, random salt); the original password is never stored.
+- On login the web app stores the user's id, name and role in its own server-side session, and keeps the API's session
+  cookie inside that session so every later call to the API is made as the same user.
+- A `[SessionAuth]` filter protects every non-public page. Logging out ends the API session, clears the web session and
+  redirects to the login page.
+
+## Azure Blob Storage
+
+Images (event banners and profile pictures) are stored in Azure Blob Storage, and only the API does this:
+
+1. The organiser or participant chooses an image in the web app.
+2. The web app sends the file to the API (`POST /api/events/{id}/banner` or `POST /api/users/me/picture`).
+3. The API checks it is an image under 5 MB, uploads it to the Blob container and saves the blob URL in the database
+   (`Events.BannerUrl`, `Users.ProfilePictureUrl`).
+4. The web app displays the image straight from its Azure URL.
+
+### Setting up Azure Storage
+1. In the Azure portal create a **Storage account** (Standard, LRS is fine).
+2. Open it, go to **Settings > Configuration** and set **Allow Blob anonymous access** to **Enabled** (so browsers can display the images). Save.
+3. Go to **Security + networking > Access keys**, click **Show** and copy a **Connection string**.
+4. Give the connection string to the API (never commit it):
+   - **Visual Studio:** right-click `RaceDay.Api` > **Manage User Secrets** and paste:
+     ```json
+     { "AzureBlob": { "ConnectionString": "PASTE_CONNECTION_STRING_HERE" } }
+     ```
+   - **Docker:** copy `.env.example` to `.env` and paste the connection string into it.
+
+The blob container (`raceday-images`) is created automatically on the first upload.
+
+If no connection string is configured, the API falls back to saving images in a local `uploads` folder so the application
+still runs. The marked submission uses Azure.
+
+## Running the application
+
+### Option 1 - Docker (one command)
+
+Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/). From the folder that contains `docker-compose.yml`:
 
 ```
-Server=(localdb)\MSSQLLocalDB;Database=RaceDayDB;Trusted_Connection=True;TrustServerCertificate=True
+docker compose up --build
 ```
 
-If you use SQL Server Express, change the server to `.\SQLEXPRESS` (use the same server name you type into
-SSMS when connecting).
+This builds and starts three containers: SQL Server, the API and the MVC web app. The first run takes a few minutes.
+(Optional: copy `.env.example` to `.env` first so uploads go to Azure.)
 
-### 3. Create the database (EF Core Code-First migration)
-The migration is already in the repository (`RaceDay.Api/Migrations`). In Visual Studio open
-**Tools > NuGet Package Manager > Package Manager Console**, set **Default project** to `RaceDay.Api`, then run:
+| What | Address |
+|---|---|
+| Web application | http://localhost:5080 |
+| API Swagger | http://localhost:5081/swagger |
+
+Stop everything with `docker compose down` (add `-v` to also delete the database and uploaded files).
+
+The containerised application behaves the same as running locally: the API creates the database from its migrations and
+seeds the same sample data on start-up.
+
+**How the Docker setup works**
+- Each project has its own multi-stage `Dockerfile`: the .NET 10 SDK image restores and publishes the app, then only the
+  small ASP.NET runtime image is kept. The project file is copied first so the package-restore layer is cached, and the
+  app runs as a non-root user.
+- `docker-compose.yml` starts SQL Server first (with a health check), then the API (which waits for the database and
+  retries until it is ready), then the web app. The web app reaches the API by its service name (`http://api:8080`).
+
+### Option 2 - Visual Studio
+
+1. Open `Part2-API/RaceDay.sln`. Add the web project if it is not already there: right-click the solution > **Add > Existing Project** > `Part3-Web/RaceDay.Web/RaceDay.Web.csproj`.
+2. Check the connection string in `Part2-API/RaceDay.Api/appsettings.json` (default: LocalDB).
+3. Open **Tools > NuGet Package Manager > Package Manager Console**, set **Default project** to `RaceDay.Api`, and run: `Update-Database`
+4. Right-click the solution > **Configure Startup Projects** > **Multiple startup projects**: set `RaceDay.Api` and `RaceDay.Web` to **Start**. Press **F5**.
+
+| What | Address |
+|---|---|
+| Web application | https://localhost:7200 |
+| API Swagger | https://localhost:7105/swagger |
+
+### Demo accounts (all use the password `Password123!`)
+
+| Account | Role |
+|---|---|
+| thabo.mokoena@raceday.co.za | Organiser (owns the Marathon and Fun Run) |
+| lindiwe.nkosi@raceday.co.za | Organiser (owns the Trail Challenge) |
+| sipho.dlamini@gmail.com | Participant (has finished two races) |
+| amahle.zulu@gmail.com | Participant |
+
+## Project structure
 
 ```
-Update-Database
+Part2-API/
+  RaceDay.Api/        Web API: controllers, EF Core models and migrations, Azure Blob service, Dockerfile
+  RaceDay.Tests/      94 xUnit tests (authentication, roles, events, enrolments, results, uploads)
+Part3-Web/
+  RaceDay.Web/
+    Controllers/      Account, Events, Organiser, Participant, Profile, Home
+    Services/         RaceDayApi (the only code that talks to the API), session keys, image URL resolver
+    Filters/          SessionAuth (login and role protection)
+    Models/           API data shapes and form view models
+    Views/            Razor pages for each role + shared layout and partials
+    wwwroot/css/      RaceDay theme
+    Dockerfile
+docs/                 Part 1 planning documents and the video script
+docker-compose.yml    Runs SQL Server + API + web app
+.github/workflows/    CI pipeline
 ```
 
-Open SSMS and refresh: the `RaceDayDB` database now contains the Users, Events, Categories, Enrolments,
-Results and Payments tables. When the API starts it seeds the same sample data as the Part 1 SQL script.
-
-### 4. Run the API
-Right-click `RaceDay.Api`, choose **Set as Startup Project**, and press **F5**. Swagger opens at
-`https://localhost:7105/swagger`.
-
-### 5. Try it
-Log in through Swagger with `POST /api/auth/login`. The browser keeps the session cookie, so every other
-endpoint then works as that user.
-
-| Seeded account | Role | Password |
-|---|---|---|
-| thabo.mokoena@raceday.co.za | Organiser (owns events 1 and 2) | `Password123!` |
-| lindiwe.nkosi@raceday.co.za | Organiser (owns event 3) | `Password123!` |
-| sipho.dlamini@gmail.com | Participant | `Password123!` |
-| amahle.zulu@gmail.com | Participant | `Password123!` |
-
-### 6. Run the unit tests
-In Visual Studio: **Test > Run All Tests** (results appear in Test Explorer). Or from a terminal in the
-repository root:
+## Unit tests
 
 ```
 dotnet test Part2-API/RaceDay.sln
 ```
 
-There are 74 tests. They start the real API in memory with an in-memory database, so they need no SQL Server.
-<img width="1916" height="1012" alt="Screenshot 2026-10-14 215450" src="https://github.com/user-attachments/assets/70b3fed4-b5a3-44ff-8766-65a7ba7cd4ef" />
-
-## Authentication and security
-
-- **Registration:** a user supplies their details and chooses a role (Organiser or Participant). Emails are unique.
-- **Password hashing:** passwords are hashed with PBKDF2 (SHA-256, 100,000 iterations, unique random salt per
-  password). The original password is never stored or returned.
-- **Session management:** on login the server creates a server-side session that stores the user's id and role.
-  The browser only receives an HttpOnly session cookie. The `[SessionAuthorize]` attribute reads the session on every
-  protected request: no session returns **401 Unauthorized**, and the wrong role returns **403 Forbidden**.
-- **Ownership checks:** Organisers can only change events, categories, enrolments and results that belong to their own
-  events. Participants can only see and pay for their own enrolments.
-
-## API endpoints
-
-Every endpoint is documented live in Swagger, including its purpose, the data it expects and each response it can return.
-
-| Method | Route | Access |
-|---|---|---|
-| POST | /api/auth/register | Public |
-| POST | /api/auth/login | Public |
-| POST | /api/auth/logout | Logged in |
-| GET | /api/users/me | Logged in |
-| PUT | /api/users/me | Logged in |
-| GET | /api/users/me/enrolments | Participant |
-| POST | /api/events | Organiser |
-| GET | /api/events | Public |
-| GET | /api/events/{id} | Public |
-| PUT | /api/events/{id} | Organiser (owner) |
-| DELETE | /api/events/{id} | Organiser (owner) |
-| POST | /api/events/{id}/categories | Organiser (owner) |
-| GET | /api/events/{id}/categories | Public |
-| GET | /api/events/{id}/enrolments | Organiser (owner) |
-| GET | /api/events/{id}/results | Public |
-| PUT | /api/categories/{id} | Organiser (owner) |
-| DELETE | /api/categories/{id} | Organiser (owner) |
-| POST | /api/categories/{id}/enrol | Participant |
-| DELETE | /api/enrolments/{id} | Participant (owner) or event Organiser |
-| GET | /api/enrolments/{id}/results | Participant (owner) or event Organiser |
-| POST | /api/enrolments/{id}/payments | Participant (owner) |
-| GET | /api/enrolments/{id}/payments | Participant (owner) or event Organiser |
-| POST | /api/results | Organiser (owner) |
-
-## Differences from the Part 1 plan
-
-The Part 2 API follows the Part 1 endpoint plan (22 endpoints). These changes were made deliberately:
-
-1. **Events table: two new columns.** The Part 2 brief requires each event to capture a *distance* and an
-   *event type* (run, walk or cycle), which the Part 1 ERD did not include. `DistanceKM` and `EventType` were added to
-   Events (see `Part2-API/Database/Part2_Schema_Update.sql`). All other tables and columns match the Part 1 ERD and SQL script.
-2. **One extra endpoint:** `POST /api/auth/logout`, needed so a session can be ended.
-3. **Seeded passwords:** the Part 1 SQL script used placeholder text for password hashes. The API seeds real PBKDF2
-   hashes of `Password123!` so the sample accounts can log in.
-4. **Extra response codes:** deleting an event or category that already has enrolments returns `409 Conflict`, and
-   `POST /api/results` returns `200` (instead of `201`) when it updates an existing result.
-5. **Cancelling an enrolment** sets its status to "Cancelled" instead of deleting the row, so results and payments
-   stay traceable.
+94 tests start the real API in memory (with an in-memory database and a fake image store), covering success and failure
+cases for registration, login, role enforcement, events, categories, enrolments, payments, results, image uploads, the
+Organiser dashboard data and the Participant race history.
 
 ## CI/CD
 
-The workflow in `.github/workflows/main.yml` runs on every push. It installs .NET 10, restores packages, builds the
-solution in Release mode, and runs all unit tests. A failing build or test turns the run red.
+`.github/workflows/ci.yml` runs on every push and has three jobs:
+
+1. **Validate repository structure** - checks the README, `docker-compose.yml`, both Dockerfiles and all three projects exist.
+2. **Build and run unit tests** - builds the API, the test project and the MVC web app, then runs every unit test.
+3. **Build Docker images** - builds the API and web images to prove the Dockerfiles work.
 
 **Latest successful run:**
 
-![CI passing]<img width="1911" height="1012" alt="Screenshot 2026-10-14 214501" src="https://github.com/user-attachments/assets/b98612f7-62b5-4b48-98b1-09655117e90e" />
+![CI passing](docs/ci-success.png)
 
+*(Replace `docs/ci-success.png` with your screenshot of the green build.)*
 
+## API additions made for Part 3
 
+The Part 2 API gained four endpoints so the web app never needs its own data logic:
+
+| Method | Route | Purpose |
+|---|---|---|
+| GET | /api/events/mine | Organiser dashboard: own events with enrolment counts |
+| POST | /api/events/{id}/banner | Upload an event banner (stored in Azure Blob Storage) |
+| POST | /api/users/me/picture | Upload a profile picture (stored in Azure Blob Storage) |
+| GET | /api/users/me/results | Participant race history, including finishers per category |
+
+`Events.BannerUrl` and `Users.ProfilePictureUrl` were added through the `AddImageUrls` migration, and enrolment responses now
+include the event date and entry fee. (Payments are simulated: no real payment gateway is called.)
 
 ## Video walkthrough
 
-Unlisted YouTube video demonstrating the running API, code structure, endpoints, authentication and unit tests:
-https://youtu.be/5v6Kyy7uK3U 
+Unlisted YouTube video demonstrating the full running application, the MVC structure, Blob Storage integration and Docker setup:
+
+**[Insert YouTube link here]**
+
+## Author
+
+Tsatsawane - Diploma in Software Development, Second Year - PROG6212 Programming 2B
