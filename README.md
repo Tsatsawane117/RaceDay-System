@@ -171,6 +171,7 @@ dotnet test Part2-API/RaceDay.sln
 cases for registration, login, role enforcement, events, categories, enrolments, payments, results, image uploads, the
 Organiser dashboard data and the Participant race history.
 
+
 ## CI/CD
 
 `.github/workflows/ci.yml` runs on every push and has three jobs:
@@ -181,9 +182,9 @@ Organiser dashboard data and the Participant race history.
 
 **Latest successful run:**
 
-![CI passing](docs/ci-success.png)
+![CI passing]("C:\Users\nekho\OneDrive\Pictures\Screenshots\Screenshot 2026-11-09 211943.png")
 
-*(Replace `docs/ci-success.png` with your screenshot of the green build.)*
+
 
 ## API additions made for Part 3
 
@@ -205,6 +206,4 @@ Unlisted YouTube video demonstrating the full running application, the MVC struc
 
 **[Insert YouTube link here]**
 
-## Author
 
-Tsatsawane - Diploma in Software Development, Second Year - PROG6212 Programming 2B
