@@ -182,7 +182,9 @@ Organiser dashboard data and the Participant race history.
 
 **Latest successful run:**
 
-![CI passing]("C:\Users\nekho\OneDrive\Pictures\Screenshots\Screenshot 2026-11-09 211943.png")
+![CI passing]
+<img width="1917" height="1072" alt="Screenshot 2026-11-09 211943" src="https://github.com/user-attachments/assets/e56aec2b-a066-4564-bd73-deacce6eb0da" />
+
 
 
 
