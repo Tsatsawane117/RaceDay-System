@@ -1,0 +1,99 @@
+@model EventDetailsVm
+@{
+    var ev = Model.Event;
+    ViewData["Title"] = ev.EventName;
+    var banner = Assets.Resolve(ev.BannerUrl);
+    var role = Context.Session.GetString(SessionKeys.Role);
+    var loggedIn = Context.Session.GetInt32(SessionKeys.UserId) != null;
+    var categories = ev.Categories ?? new List<CategoryDto>();
+}
+
+<div class="page-header">
+    <div class="container">
+        <span class="type-pill">@ev.EventType.Emoji() @ev.EventType</span>
+        <h1 class="mt-2">@ev.EventName</h1>
+        <p>📅 @ev.EventDate.ToString("dddd, dd MMMM yyyy") &nbsp;&middot;&nbsp; 📍 @ev.Location</p>
+    </div>
+</div>
+
+<div class="container py-4">
+    <partial name="_Alerts" />
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            @if (banner != null)
+            {
+                <img src="@banner" class="detail-banner mb-4" alt="Banner for @ev.EventName" />
+            }
+            else
+            {
+                <div class="detail-banner-placeholder mb-4"><span>@ev.EventType.Emoji()</span></div>
+            }
+
+            <div class="form-card">
+                <h4>About this event</h4>
+                <p class="mb-3">@(string.IsNullOrWhiteSpace(ev.Description) ? "No description has been added yet." : ev.Description)</p>
+                <div class="d-flex flex-wrap gap-4">
+                    <div><div class="stat-label">Distance</div><strong>@ev.DistanceKM.ToString("0.##") km</strong></div>
+                    <div><div class="stat-label">Type</div><strong>@ev.EventType</strong></div>
+                    <div><div class="stat-label">Status</div><partial name="_StatusBadge" model="ev.Status" /></div>
+                </div>
+                <a asp-action="Results" asp-route-id="@ev.EventID" class="btn btn-outline-raceday mt-4">🏆 View results</a>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="form-card">
+                <h4>Categories</h4>
+
+                @if (categories.Count == 0)
+                {
+                    <p class="text-muted mb-0">The organiser has not added any categories yet.</p>
+                }
+                else
+                {
+                    foreach (var c in categories)
+                    {
+                        var enrolled = Model.EnrolledCategoryIds.Contains(c.CategoryID);
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-3">
+                            <div>
+                                <strong>@c.CategoryName</strong>
+                                <div class="text-muted small">@c.DistanceKM.ToString("0.##") km &middot; @c.EntryFee.Money() &middot; max @c.MaxParticipants</div>
+                            </div>
+                            <div>
+                                @if (enrolled)
+                                {
+                                    <partial name="_StatusBadge" model="@("Confirmed")" />
+                                    <span class="small text-muted d-block text-end">Entered</span>
+                                }
+                                else if (role == "Participant" && ev.Status == "Open")
+                                {
+                                    <form asp-controller="Events" asp-action="Enrol" method="post">
+                                        <input type="hidden" name="eventId" value="@ev.EventID" />
+                                        <input type="hidden" name="categoryId" value="@c.CategoryID" />
+                                        <button type="submit" class="btn btn-raceday btn-sm">Enter</button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+
+                <div class="mt-3">
+                    @if (!loggedIn)
+                    {
+                        <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="btn btn-raceday w-100">Log in to enter this event</a>
+                    }
+                    else if (role == "Organiser")
+                    {
+                        <p class="text-muted small mb-0">Organisers manage events but cannot enter them. Log in as a Participant to enrol.</p>
+                    }
+                    else if (ev.Status != "Open")
+                    {
+                        <p class="text-muted small mb-0">Entries are not open for this event (status: @ev.Status).</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

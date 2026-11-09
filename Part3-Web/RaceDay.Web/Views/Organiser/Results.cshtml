@@ -1,0 +1,69 @@
+@model ResultsEntryVm
+@{
+    ViewData["Title"] = "Results entry - " + Model.Event.EventName;
+}
+
+<div class="page-header">
+    <div class="container">
+        <h1>Results entry</h1>
+        <p>@Model.Event.EventName &middot; Saved results are published straight away on the public results page.</p>
+    </div>
+</div>
+
+<div class="container py-4">
+    <partial name="_Alerts" />
+
+    @if (Model.Rows.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="big">⏱️</div>
+            <h4>No participants to record</h4>
+            <p>Results can be captured once participants have enrolled.</p>
+        </div>
+    }
+    else
+    {
+        <p class="text-muted">Enter the finish time as <strong>hh:mm:ss</strong> (for example 01:45:30) and the finishing position, then save each row.</p>
+
+        @foreach (var row in Model.Rows)
+        {
+            <div class="result-row">
+                <form asp-action="SaveResult" method="post" class="row g-2 align-items-end">
+                    <input type="hidden" name="eventId" value="@Model.Event.EventID" />
+                    <input type="hidden" name="enrolmentId" value="@row.EnrolmentID" />
+
+                    <div class="col-md-3">
+                        <strong>@row.ParticipantName</strong>
+                        <div class="text-muted small">Bib @row.BibNumber &middot; @row.CategoryName</div>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-0">Finish time</label>
+                        <input name="finishTime" value="@row.FinishTime" class="form-control form-control-sm" placeholder="hh:mm:ss" />
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-0">Position</label>
+                        <input name="position" type="number" min="1" value="@row.Position" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label small mb-0">Result</label>
+                        <select name="status" class="form-select form-select-sm">
+                            @foreach (var s in new[] { "Not Started", "Finished", "DNF", "DSQ" })
+                            {
+                                <option value="@s" selected="@(row.Status == s)">@s</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-3 d-flex align-items-center gap-2 justify-content-md-end">
+                        <partial name="_StatusBadge" model="row.Status" />
+                        <button type="submit" class="btn btn-raceday btn-sm">Save</button>
+                    </div>
+                </form>
+            </div>
+        }
+    }
+
+    <div class="d-flex gap-2 mt-3">
+        <a asp-controller="Events" asp-action="Results" asp-route-id="@Model.Event.EventID" class="btn btn-outline-raceday">🏆 View public results</a>
+        <a asp-action="Events" class="btn btn-outline-raceday">&larr; Back to my events</a>
+    </div>
+</div>

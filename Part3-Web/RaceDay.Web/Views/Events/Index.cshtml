@@ -1,0 +1,73 @@
+@model EventsIndexVm
+@{
+    ViewData["Title"] = "Upcoming events";
+}
+
+<section class="hero">
+    <div class="container">
+        <h1>Find your next <span>finish line</span></h1>
+        <p>Browse upcoming runs, walks and rides, pick your category and enter in a few clicks.</p>
+    </div>
+</section>
+
+<div class="container py-4">
+    <partial name="_Alerts" />
+
+    <form method="get" asp-controller="Events" asp-action="Index" class="filter-bar row g-3 align-items-end mb-4">
+        <div class="col-md-4">
+            <label class="form-label" for="search">Search</label>
+            <input id="search" name="search" value="@Model.Search" class="form-control" placeholder="Event name or location" />
+        </div>
+        <div class="col-md-2 col-6">
+            <label class="form-label" for="type">Type</label>
+            <select id="type" name="type" class="form-select">
+                <option value="">All types</option>
+                @foreach (var t in new[] { "Run", "Walk", "Cycle" })
+                {
+                    <option value="@t" selected="@(Model.Type == t)">@t.Emoji() @t</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2 col-6">
+            <label class="form-label" for="maxDistance">Distance</label>
+            <select id="maxDistance" name="maxDistance" class="form-select">
+                <option value="">Any distance</option>
+                @foreach (var d in new[] { 5, 10, 21, 42, 100 })
+                {
+                    <option value="@d" selected="@(Model.MaxDistance == d)">Up to @d km</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="showPast" name="showPast" value="true" checked="@Model.ShowPast" />
+                <label class="form-check-label" for="showPast">Include past events</label>
+            </div>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-raceday flex-fill">Filter</button>
+            <a asp-action="Index" class="btn btn-outline-raceday">Clear</a>
+        </div>
+    </form>
+
+    @if (Model.Events.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="big">🏁</div>
+            <h4>No events match your filters</h4>
+            <p>Try a different search, or include past events.</p>
+        </div>
+    }
+    else
+    {
+        <p class="text-muted">Showing @Model.Events.Count event@(Model.Events.Count == 1 ? "" : "s")</p>
+        <div class="row g-4">
+            @foreach (var ev in Model.Events)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <partial name="_EventCard" model="ev" />
+                </div>
+            }
+        </div>
+    }
+</div>

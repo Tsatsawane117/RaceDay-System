@@ -1,0 +1,14 @@
+@model string
+@{
+    // One place decides the colour of every status in the app (green / amber / red / blue / grey).
+    var css = Model switch
+    {
+        "Confirmed" or "Open" or "Finished" => "status-green",
+        "Pending" or "DNF" => "status-amber",
+        "Cancelled" or "DSQ" => "status-red",
+        "Planned" => "status-blue",
+        "Completed" => "status-navy",
+        _ => "status-grey"
+    };
+}
+<span class="status-badge @css">@Model</span>

@@ -1,0 +1,20 @@
+@{
+    ViewData["Title"] = "Access denied";
+    var role = Context.Session.GetString(SessionKeys.Role);
+}
+
+<div class="container py-5">
+    <div class="empty-state">
+        <div class="big">🚫</div>
+        <h2>That page is not for your account</h2>
+        <p>This area is only available to a different type of user.</p>
+        @if (role == "Organiser")
+        {
+            <a asp-controller="Organiser" asp-action="Dashboard" class="btn btn-raceday">Back to my dashboard</a>
+        }
+        else
+        {
+            <a asp-controller="Events" asp-action="Index" class="btn btn-raceday">Back to events</a>
+        }
+    </div>
+</div>

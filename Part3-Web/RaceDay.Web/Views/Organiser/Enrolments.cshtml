@@ -1,0 +1,49 @@
+@model EventEnrolmentsVm
+@{
+    ViewData["Title"] = "Enrolments - " + Model.Event.EventName;
+}
+
+<div class="page-header">
+    <div class="container">
+        <h1>Enrolments</h1>
+        <p>@Model.Event.EventName &middot; @Model.Enrolments.Count(e => e.Status != "Cancelled") active enrolment(s)</p>
+    </div>
+</div>
+
+<div class="container py-4">
+    <partial name="_Alerts" />
+
+    @if (Model.Enrolments.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="big">👥</div>
+            <h4>Nobody has entered yet</h4>
+            <p>Make sure the event status is "Open" and that it has at least one category.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-raceday">
+                <thead><tr><th>Bib</th><th>Participant</th><th>Category</th><th>Entered</th><th>Status</th></tr></thead>
+                <tbody>
+                    @foreach (var e in Model.Enrolments.OrderBy(x => x.CategoryName).ThenBy(x => x.ParticipantName))
+                    {
+                        <tr>
+                            <td><strong>@e.BibNumber</strong></td>
+                            <td>@e.ParticipantName</td>
+                            <td>@e.CategoryName</td>
+                            <td>@e.EnrolmentDate.ToString("dd MMM yyyy")</td>
+                            <td><partial name="_StatusBadge" model="e.Status" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <div class="d-flex gap-2 mt-3">
+        <a asp-action="Results" asp-route-eventId="@Model.Event.EventID" class="btn btn-raceday">⏱️ Enter results</a>
+        <a asp-action="Events" class="btn btn-outline-raceday">&larr; Back to my events</a>
+    </div>
+</div>

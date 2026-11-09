@@ -1,0 +1,58 @@
+@model EventResultsVm
+@{
+    ViewData["Title"] = "Results - " + Model.Event.EventName;
+    var finished = Model.Results.Where(r => r.Status == "Finished").OrderBy(r => r.Position ?? int.MaxValue).ToList();
+    var others = Model.Results.Where(r => r.Status != "Finished").ToList();
+}
+
+<div class="page-header">
+    <div class="container">
+        <h1>🏆 Results</h1>
+        <p>@Model.Event.EventName &middot; @Model.Event.EventDate.ToString("dd MMM yyyy")</p>
+    </div>
+</div>
+
+<div class="container py-4">
+    <partial name="_Alerts" />
+
+    @if (Model.Results.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="big">⏱️</div>
+            <h4>No results published yet</h4>
+            <p>Results appear here once the organiser has captured them after the event.</p>
+        </div>
+    }
+    else
+    {
+        <table class="table table-raceday mb-4">
+            <thead><tr><th>Position</th><th>Participant</th><th>Finish time</th></tr></thead>
+            <tbody>
+                @foreach (var r in finished)
+                {
+                    <tr class="@(r.Position is >= 1 and <= 3 ? "podium-" + r.Position : "")">
+                        <td><strong>@(r.Position.HasValue ? DisplayHelpers.Ordinal(r.Position.Value) : "-")</strong></td>
+                        <td>@r.ParticipantName</td>
+                        <td>@r.FinishTime.Time()</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        @if (others.Count > 0)
+        {
+            <h5>Did not finish / disqualified</h5>
+            <table class="table table-raceday">
+                <thead><tr><th>Participant</th><th>Status</th></tr></thead>
+                <tbody>
+                    @foreach (var r in others)
+                    {
+                        <tr><td>@r.ParticipantName</td><td><partial name="_StatusBadge" model="r.Status" /></td></tr>
+                    }
+                </tbody>
+            </table>
+        }
+    }
+
+    <a asp-action="Details" asp-route-id="@Model.Event.EventID" class="btn btn-outline-raceday mt-3">&larr; Back to event</a>
+</div>

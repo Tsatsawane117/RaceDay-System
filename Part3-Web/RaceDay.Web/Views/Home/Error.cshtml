@@ -1,0 +1,21 @@
+@{
+    var code = ViewData["Code"] is int c ? c : 500;
+    ViewData["Title"] = code == 404 ? "Page not found" : "Something went wrong";
+}
+
+<div class="container py-5">
+    <div class="empty-state">
+        <div class="big">@(code == 404 ? "🧭" : "🛠️")</div>
+        @if (code == 404)
+        {
+            <h2>We couldn't find that page</h2>
+            <p>It may have moved, or the address may be wrong.</p>
+        }
+        else
+        {
+            <h2>Something went wrong</h2>
+            <p>Please try again in a moment. If it keeps happening, let the organiser know.</p>
+        }
+        <a asp-controller="Events" asp-action="Index" class="btn btn-raceday">Back to events</a>
+    </div>
+</div>

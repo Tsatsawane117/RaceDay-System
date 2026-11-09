@@ -1,0 +1,58 @@
+@model List<MyResultDto>
+@{
+    ViewData["Title"] = "My results";
+}
+
+<div class="page-header">
+    <div class="container">
+        <h1>My results</h1>
+        <p>Your personal race history across completed events.</p>
+    </div>
+</div>
+
+<div class="container py-4">
+    <partial name="_Alerts" />
+
+    @if (Model.Count == 0)
+    {
+        <div class="empty-state">
+            <div class="big">⏱️</div>
+            <h4>No results yet</h4>
+            <p>Your times and positions appear here after an organiser records the results of an event you entered.</p>
+            <a asp-controller="Participant" asp-action="MyEvents" class="btn btn-outline-raceday">See my events</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-raceday">
+                <thead><tr><th>Event</th><th>Date</th><th>Category</th><th>Finish time</th><th>Position</th></tr></thead>
+                <tbody>
+                    @foreach (var r in Model)
+                    {
+                        <tr>
+                            <td><a asp-controller="Events" asp-action="Details" asp-route-id="@r.EventID"><strong>@r.EventName</strong></a></td>
+                            <td>@r.EventDate.ToString("dd MMM yyyy")</td>
+                            <td>@r.CategoryName</td>
+                            <td>@r.FinishTime.Time()</td>
+                            <td>
+                                @if (r.Status == "Finished" && r.Position.HasValue)
+                                {
+                                    <strong>@DisplayHelpers.Ordinal(r.Position.Value)</strong>
+                                    @if (r.TotalFinishers >= r.Position.Value)
+                                    {
+                                        <span class="text-muted small"> out of @r.TotalFinishers finishers</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <partial name="_StatusBadge" model="r.Status" />
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
