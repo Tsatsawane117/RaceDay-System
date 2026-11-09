@@ -208,6 +208,6 @@ include the event date and entry fee. (Payments are simulated: no real payment g
 
 Unlisted YouTube video demonstrating the full running application, the MVC structure, Blob Storage integration and Docker setup:
 
-**[Insert YouTube link here]**
+**[https://youtu.be/UDQvK1VZHz0?si=_NCUv4etsC8nw86H ]**
 
 
